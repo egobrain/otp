@@ -420,6 +420,10 @@ fun_expr -> 'fun' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?anno('$1'),{function,'$2','$4','$6'}}.
 fun_expr -> 'fun' fun_clauses 'end' :
 	build_fun(?anno('$1'), '$2').
+fun_expr -> 'fun' atom argument_list :
+	build_cut(?anno('$1'), '$2', '$3').
+fun_expr -> 'fun' atom_or_var ':' atom_or_var argument_list :
+	build_cut(?anno('$1'), {remote, ?anno('$1'), '$2','$4'}, '$5').
 
 atom_or_var -> atom : '$1'.
 atom_or_var -> var : '$1'.
@@ -1271,6 +1275,23 @@ build_fun(Anno, Cs) ->
         Name ->
             {named_fun,Anno,Name,CheckedCs}
     end.
+
+build_cut(Anno, F, {Args, _ArgsAnno}) ->
+    {InArgs, CallArgs} = build_cut_args(Args),
+    Clause = {clause, Anno, InArgs, [], [{call, Anno, F, CallArgs}]},
+    {'fun',Anno,{clauses, [Clause]}}.
+
+build_cut_args(Args) -> build_cut_args(Args, 0, [], []).
+build_cut_args([], _Cnt, InArgs, CallArgs) ->
+    {lists:reverse(InArgs), lists:reverse(CallArgs)};
+build_cut_args([{var, Anno, '_'}|T], Cnt, InArgs, CallArgs) ->
+    CatVar = {var, Anno, cut_arg_name(Anno, Cnt)},
+    build_cut_args(T, Cnt+1, [CatVar|InArgs], [CatVar|CallArgs]);
+build_cut_args([H|T], Cnt, InArgs, CallArgs) ->
+    build_cut_args(T, Cnt, InArgs, [H|CallArgs]).
+
+cut_arg_name(Anno, Idx) ->
+    list_to_atom(lists:concat(["__CatArg_", Anno, "-", Idx])).
 
 check_clauses(Cs, Name, Arity) ->
     [case C of
