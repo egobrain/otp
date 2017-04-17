@@ -26,7 +26,7 @@ form
 attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
-expr expr_100 expr_150 expr_160 expr_200 expr_300 expr_400 expr_500
+expr expr_100 expr_140 expr_150 expr_160 expr_200 expr_300 expr_400 expr_500
 expr_600 expr_700 expr_800
 expr_max
 list tail
@@ -62,9 +62,12 @@ char integer float atom string var
 '++' '--'
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
+'|>'
 '!' '=' '::' '..' '...'
 'spec' 'callback' % helper
 dot.
+
+Right 100 '|>'.
 
 Expect 2.
 
@@ -221,9 +224,12 @@ clause_body -> '->' exprs: '$2'.
 expr -> 'catch' expr : {'catch',?anno('$1'),'$2'}.
 expr -> expr_100 : '$1'.
 
-expr_100 -> expr_150 '=' expr_100 : {match,?anno('$2'),'$1','$3'}.
-expr_100 -> expr_150 '!' expr_100 : ?mkop2('$1', '$2', '$3').
-expr_100 -> expr_150 : '$1'.
+expr_100 -> expr_140 '=' expr_100 : {match,?anno('$2'),'$1','$3'}.
+expr_100 -> expr_140 '!' expr_100 : ?mkop2('$1', '$2', '$3').
+expr_100 -> expr_140 : '$1'.
+
+expr_140 -> expr_140 '|>' expr_150: {call, ?anno('$3'), '$3', ['$1']}.
+expr_140 -> expr_150 : '$1'.
 
 expr_150 -> expr_160 'orelse' expr_150 : ?mkop2('$1', '$2', '$3').
 expr_150 -> expr_160 : '$1'.
